@@ -1,8 +1,41 @@
 import sys
 import os
 from collections import defaultdict
+def print_help():
+    print("""
+
+                      Утилита для анализа папок
+                      
+
+
+    Назначение:
+        Рекурсивный обход папки с выводом содержимого и формированием
+        отчёта со статистикой.
+
+    Запуск:
+        python main.py <путь_к_папке> [фильтр]
+
+    Что делает:
+        - Рекурсивно обходит все вложенные папки
+        - Показывает структуру папок и файлов с размерами
+        - Формирует отчёт: количество папок/файлов, общий размер
+        - Статистика по расширениям файлов
+        - Фильтрация файлов по расширению
+
+    Результат:
+        Отчет выводится в консоль после обхода папки.
+
+    """)
+
+
+
+
 
 def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ['--help', '-h', '/?', 'help']:
+        print_help()
+        sys.exit(0)
+
     if len(sys.argv) < 2:
         print("Ошибка: не передан путь к папке")
         print("Фильтр (необязательный): .txt, .py, .jpg и т.д.")
@@ -10,10 +43,20 @@ def main():
 
     folder_path = sys.argv[1]
 
+    if not folder_path or folder_path.strip() == '':
+        print("Ошибка: путь к папке не может быть пустым")
+        sys.exit(1)
+
+    if any(c in folder_path for c in ['*', '?', '"', '<', '>', '|']):
+        print("Ошибка: путь содержит недопустимые символы")
+        sys.exit(1)
+
     file_filter = None
     if len(sys.argv) >= 3:
         file_filter = sys.argv[2]
-
+        if not file_filter or file_filter.strip() == '':
+            print("Ошибка: фильтр не может быть пустым")
+            sys.exit(1)
         if not file_filter.startswith('.'):
             file_filter = '.' + file_filter
 
@@ -41,7 +84,6 @@ def main():
 
     walk_directory(folder_path, 0, stats, file_filter)
     print_report(stats, file_filter)
-
 
 def walk_directory(path, level, stats, file_filter=None):
 
@@ -71,7 +113,6 @@ def walk_directory(path, level, stats, file_filter=None):
             size = os.path.getsize(item_path)
             show_file = True
             if file_filter:
-                # Получаем расширение файла
                 ext = os.path.splitext(item)[1].lower()
                 if ext != file_filter:
                     show_file = False
